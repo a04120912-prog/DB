@@ -200,33 +200,100 @@ function App() {
           </div>
         </div>
 
-        {/* 3. 플레이어 기록 테이블 섹션 (디자인 복구) */}
+        {/* 3. 플레이어 기록 테이블 섹션 (팀별 분리 버전) */}
         <div style={{ ...cardStyle, padding: '0', overflowX: 'auto', border: 'none' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1200px', backgroundColor: '#111827' }}>
-                <thead>
-                    <tr style={{ backgroundColor: '#1f2937', color: '#9ca3af', fontSize: '13px' }}>
-                        <th style={{ padding: '20px 15px' }}>선수 / 챔피언</th><th style={{ padding: '20px 15px' }}>K / D / A</th><th style={{ padding: '20px 15px' }}>딜량 (가/받)</th><th style={{ padding: '20px 15px' }}>성장 (골드/CS)</th><th style={{ padding: '20px 15px' }}>시야 (점수/제어)</th><th style={{ padding: '20px 40px 20px 15px', textAlign: 'center' }}>특수 기록</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {players.map((p, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #1f2937' }}>
-                            <td style={{ padding: '18px 15px' }}>
-                                <div style={{display:'flex', flexDirection:'column', gap:'8px', alignItems:'center'}}>
-                                    {/* [기존 UI 복구] 테이블 입력창 너비 복구 (125px) */}
-                                    <input type="text" placeholder="닉네임" style={{...inputBaseStyle, width: '125px'}} value={p.nickname} onChange={e => handlePlayerChange(i, 'nickname', e.target.value)} />
-                                    <ChampionAutocomplete style={{...inputBaseStyle, width: '125px', borderColor: '#3b82f6'}} placeholder="챔피언" value={p.champion} onChange={(v) => handlePlayerChange(i, 'champion', v)} />
-                                </div>
-                            </td>
-                            <td style={{ padding: '18px 15px' }}><div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}><input type="number" placeholder="K" style={{...inputBaseStyle, width: '48px', textAlign: 'center'}} value={p.k} onChange={e => handlePlayerChange(i, 'k', e.target.value)} /><input type="number" placeholder="D" style={{...inputBaseStyle, width: '48px', textAlign: 'center'}} value={p.d} onChange={e => handlePlayerChange(i, 'd', e.target.value)} /><input type="number" placeholder="A" style={{...inputBaseStyle, width: '48px', textAlign: 'center'}} value={p.a} onChange={e => handlePlayerChange(i, 'a', e.target.value)} /></div></td>
-                            <td style={{ padding: '18px 15px' }}><div style={{display:'flex', flexDirection:'column', gap:'8px', alignItems:'center'}}><input type="number" placeholder="가한 딜" style={{...inputBaseStyle, width: '110px'}} value={p.damage} onChange={e => handlePlayerChange(i, 'damage', e.target.value)} /><input type="number" placeholder="받은 피해" style={{...inputBaseStyle, width: '110px', borderColor: '#f87171'}} value={p.damage_taken} onChange={e => handlePlayerChange(i, 'damage_taken', e.target.value)} /></div></td>
-                            <td style={{ padding: '18px 15px' }}><div style={{display:'flex', flexDirection:'column', gap:'8px', alignItems:'center'}}><input type="number" placeholder="골드" style={{...inputBaseStyle, width: '110px', color: '#facc15'}} value={p.gold} onChange={e => handlePlayerChange(i, 'gold', e.target.value)} /><input type="number" placeholder="CS" style={{...inputBaseStyle, width: '110px'}} value={p.cs} onChange={e => handlePlayerChange(i, 'cs', e.target.value)} /></div></td>
-                            <td style={{ padding: '18px 15px' }}><div style={{display:'flex', flexDirection:'column', gap:'8px', alignItems:'center'}}><input type="number" placeholder="시야" style={{...inputBaseStyle, width: '85px'}} value={p.vision} onChange={e => handlePlayerChange(i, 'vision', e.target.value)} /><input type="number" placeholder="제어" style={{...inputBaseStyle, width: '85px', borderColor: '#fbbf24'}} value={p.control_wards} onChange={e => handlePlayerChange(i, 'control_wards', e.target.value)} /></div></td>
-                            <td style={{ padding: '18px 40px 18px 15px' }}><div style={{display:'flex', flexDirection:'column', gap:'8px', alignItems:'center'}}><select style={{...inputBaseStyle, width: '115px', height: '40px'}} value={p.multi_kill} onChange={e => handlePlayerChange(i, 'multi_kill', e.target.value)}><option value="0">멀티킬 없음</option><option value="2">더블킬</option><option value="3">트리플킬</option><option value="4">쿼드라킬</option><option value="5">펜타킬</option></select><button onClick={() => handlePlayerChange(i, 'first_blood', !p.first_blood)} style={{ width: '115px', padding: '9px', borderRadius: '8px', border: '1px solid', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: p.first_blood ? '#ef4444' : '#1f2937', color: p.first_blood ? 'white' : '#9ca3af', borderColor: p.first_blood ? '#ef4444' : '#374151' }}>{p.first_blood ? 'FIRST BLOOD' : 'NO FB'}</button></div></td>
-                        </tr>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1200px', backgroundColor: '#111827' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#1f2937', color: '#9ca3af', fontSize: '13px' }}>
+                <th style={{ padding: '20px 15px' }}>선수 / 챔피언</th>
+                <th style={{ padding: '20px 15px' }}>K / D / A</th>
+                <th style={{ padding: '20px 15px' }}>딜량 (가/받)</th>
+                <th style={{ padding: '20px 15px' }}>성장 (골드/CS)</th>
+                <th style={{ padding: '20px 15px' }}>시야 (점수/제어)</th>
+                <th style={{ padding: '20px 40px 20px 15px', textAlign: 'center' }}>특수 기록</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* 블루팀과 레드팀을 나누어 렌더링 */}
+              {['Blue', 'Red'].map((side) => (
+                <React.Fragment key={side}>
+                  {/* 팀 구분 헤더 행 */}
+                  <tr style={{ backgroundColor: side === 'Blue' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
+                    <td colSpan="6" style={{ padding: '12px 20px', borderLeft: `6px solid ${side === 'Blue' ? '#3b82f6' : '#ef4444'}`, fontWeight: '900', color: side === 'Blue' ? '#60a5fa' : '#f87171', fontSize: '15px' }}>
+                      {side.toUpperCase()} TEAM
+                    </td>
+                  </tr>
+                  {players
+                    .map((p, originalIdx) => ({ ...p, originalIdx })) // 원본 인덱스 유지
+                    .filter(p => p.side === side)
+                    .map((p, i) => (
+                      <tr key={p.originalIdx} style={{ borderBottom: '1px solid #1f2937' }}>
+                        <td style={{ padding: '18px 15px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                            {/* 닉네임 입력란: 팀 컬러로 강조 */}
+                            <input 
+                              type="text" 
+                              placeholder={`${p.lane} 닉네임`} 
+                              style={{ ...inputBaseStyle, width: '125px', borderColor: side === 'Blue' ? '#3b82f6' : '#ef4444' }} 
+                              value={p.nickname} 
+                              onChange={e => handlePlayerChange(p.originalIdx, 'nickname', e.target.value)} 
+                            />
+                            <ChampionAutocomplete 
+                              style={{ ...inputBaseStyle, width: '125px' }} 
+                              placeholder="챔피언" 
+                              value={p.champion} 
+                              onChange={(v) => handlePlayerChange(p.originalIdx, 'champion', v)} 
+                            />
+                          </div>
+                        </td>
+                        <td style={{ padding: '18px 15px' }}>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                            <input type="number" placeholder="K" style={{ ...inputBaseStyle, width: '48px', textAlign: 'center' }} value={p.k} onChange={e => handlePlayerChange(p.originalIdx, 'k', e.target.value)} />
+                            <input type="number" placeholder="D" style={{ ...inputBaseStyle, width: '48px', textAlign: 'center' }} value={p.d} onChange={e => handlePlayerChange(p.originalIdx, 'd', e.target.value)} />
+                            <input type="number" placeholder="A" style={{ ...inputBaseStyle, width: '48px', textAlign: 'center' }} value={p.a} onChange={e => handlePlayerChange(p.originalIdx, 'a', e.target.value)} />
+                          </div>
+                        </td>
+                        <td style={{ padding: '18px 15px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                            <input type="number" placeholder="가한 딜" style={{ ...inputBaseStyle, width: '110px' }} value={p.damage} onChange={e => handlePlayerChange(p.originalIdx, 'damage', e.target.value)} />
+                            <input type="number" placeholder="받은 피해" style={{ ...inputBaseStyle, width: '110px', borderColor: '#f87171' }} value={p.damage_taken} onChange={e => handlePlayerChange(p.originalIdx, 'damage_taken', e.target.value)} />
+                          </div>
+                        </td>
+                        <td style={{ padding: '18px 15px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                            <input type="number" placeholder="골드" style={{ ...inputBaseStyle, width: '110px', color: '#facc15' }} value={p.gold} onChange={e => handlePlayerChange(p.originalIdx, 'gold', e.target.value)} />
+                            <input type="number" placeholder="CS" style={{ ...inputBaseStyle, width: '110px' }} value={p.cs} onChange={e => handlePlayerChange(p.originalIdx, 'cs', e.target.value)} />
+                          </div>
+                        </td>
+                        <td style={{ padding: '18px 15px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                            <input type="number" placeholder="시야" style={{ ...inputBaseStyle, width: '85px' }} value={p.vision} onChange={e => handlePlayerChange(p.originalIdx, 'vision', e.target.value)} />
+                            <input type="number" placeholder="제어" style={{ ...inputBaseStyle, width: '85px', borderColor: '#fbbf24' }} value={p.control_wards} onChange={e => handlePlayerChange(p.originalIdx, 'control_wards', e.target.value)} />
+                          </div>
+                        </td>
+                        <td style={{ padding: '18px 40px 18px 15px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                            <select style={{ ...inputBaseStyle, width: '115px', height: '40px' }} value={p.multi_kill} onChange={e => handlePlayerChange(p.originalIdx, 'multi_kill', e.target.value)}>
+                              <option value="0">멀티킬 없음</option>
+                              <option value="2">더블킬</option>
+                              <option value="3">트리플킬</option>
+                              <option value="4">쿼드라킬</option>
+                              <option value="5">펜타킬</option>
+                            </select>
+                            <button 
+                              onClick={() => handlePlayerChange(p.originalIdx, 'first_blood', !p.first_blood)} 
+                              style={{ width: '115px', padding: '9px', borderRadius: '8px', border: '1px solid', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: p.first_blood ? '#ef4444' : '#1f2937', color: p.first_blood ? 'white' : '#9ca3af', borderColor: p.first_blood ? '#ef4444' : '#374151' }}
+                            >
+                              {p.first_blood ? 'FIRST BLOOD' : 'NO FB'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
-                </tbody>
-            </table>
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         <button onClick={handleSubmit} style={{ width: '100%', padding: '22px', backgroundColor: '#2563eb', color: 'white', borderRadius: '16px', fontSize: '18px', fontWeight: '900', cursor: 'pointer', marginTop: '25px', border: 'none', boxShadow: '0 10px 25px rgba(37, 99, 235, 0.4)' }}>모든 데이터 세트 저장하기</button>
